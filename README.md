@@ -77,3 +77,29 @@ func main() {
     defer service.Stop()
 }
 ```
+
+### Assigning validator
+
+```go
+import (
+    "github.com/go-playground/validator/v10"
+
+    libConfig "github.com/MiG-21/go-lib-config"
+)
+
+// Validator wrapper example
+type Validator struct {
+validator *validator.Validate
+}
+
+func (cv *Validator) Validate(i interface{}) error {
+return cv.validator.Struct(i)
+}
+
+func main() {
+    var cfg Config
+    service := libConfig.NewConfigService(1 * time.Minute)
+    // assign validator
+    service.Validator = &Validator{validator: validator.New()}
+}
+```
