@@ -118,6 +118,37 @@ var _ = Describe("Config", func() {
 	})
 
 	Context("NewConfigService", func() {
+		It("Should be failed", func() {
+			type TestCfg struct {
+				Var1 int `env:"TEST_VAR1"`
+				Var2 int `env:"TEST_VAR2"`
+				Var3 int `env:"TEST_VAR3"`
+			}
+			var cfg TestCfg
+			service := libConfig.NewConfigService(5 * time.Millisecond)
+			reader := libConfig.NewEnvReader()
+			err := service.Start(&cfg, nil, &reader)
+			defer func() {
+				_ = service.Stop()
+			}()
+			Expect(err).To(HaveOccurred())
+		})
+		It("Should not be failed", func() {
+			type TestCfg struct {
+				Var1 int `env:"TEST_VAR1"`
+				Var2 int `env:"TEST_VAR2"`
+				Var3 int `env:"TEST_VAR3"`
+			}
+			var cfg TestCfg
+			service := libConfig.NewConfigService(5 * time.Millisecond)
+			reader := libConfig.NewEnvReader()
+			reader.Quiet = true
+			err := service.Start(&cfg, nil, &reader)
+			defer func() {
+				_ = service.Stop()
+			}()
+			Expect(err).NotTo(HaveOccurred())
+		})
 		It("Read and refresh", func() {
 			defer os.Clearenv()
 

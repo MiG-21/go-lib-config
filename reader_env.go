@@ -17,8 +17,6 @@ func (r EnvReader) Read(cfg interface{}) error {
 		return err
 	}
 
-	errCollector := errorCollector()
-	var cErr error
 	for _, meta := range metaInfo {
 		tag, _ := meta.Tag.Lookup(r.tag)
 		if tag == "" {
@@ -30,14 +28,16 @@ func (r EnvReader) Read(cfg interface{}) error {
 		if value, ok := os.LookupEnv(tag); ok {
 			rawValue = &value
 		} else {
-			cErr = errCollector(fmt.Errorf("ENV: %s is not set", tag))
-			continue
+			if r.Quiet {
+				continue
+			}
+			return fmt.Errorf("ENV: %s is not set", tag)
 		}
 
 		if err = parseValue(meta.FieldValue, *rawValue, meta.Separator, meta.Layout); err != nil {
-			cErr = errCollector(err)
+			return err
 		}
 	}
 
-	return cErr
+	return nil
 }
