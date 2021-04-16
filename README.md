@@ -6,7 +6,7 @@
 
 ```go
 import (
-	"time"
+    "time"
 
     libConfig "github.com/MiG-21/go-lib-config"
 )
@@ -27,7 +27,7 @@ func main() {
 
 ```go
 import (
-	"time"
+    "time"
 
     libConfig "github.com/MiG-21/go-lib-config"
 )
@@ -55,7 +55,7 @@ func main() {
 
 ```go
 import (
-	"time"
+    "time"
 
     libConfig "github.com/MiG-21/go-lib-config"
 )
@@ -90,11 +90,11 @@ import (
 
 // Validator wrapper example
 type Validator struct {
-validator *validator.Validate
+    validator *validator.Validate
 }
 
 func (cv *Validator) Validate(i interface{}) error {
-return cv.validator.Struct(i)
+    return cv.validator.Struct(i)
 }
 
 func main() {
