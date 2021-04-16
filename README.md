@@ -13,9 +13,10 @@ import (
 
 func main() {
     var cfg Config
+    // refresh config per 1 minute
     service := libConfig.NewConfigService(1 * time.Minute)
     reader := libConfig.NewEnvReader()
-    if err := service.Start(&cfg, nil, &reader); err != nil {
+    if err := service.Start(&cfg, nil, reader); err != nil {
         // some error handler
     }
     defer service.Stop()
@@ -43,7 +44,7 @@ func main() {
     auth := libConfig.NewVaultTokenAuth("token")
     vault := libConfig.NewStorageVault(auth, "vault address", "data")
     reader := libConfig.NewVaultReaderWithFormatter(vault, defaultPathFormatter)
-    if err := service.Start(&cfg, nil, &reader); err != nil {
+    if err := service.Start(&cfg, nil, reader); err != nil {
         // some error handler
     }
     defer service.Stop()
@@ -71,7 +72,7 @@ func main() {
     auth := libConfig.NewVaultK8sAuth("vault address", "auth endpoint", "token path", "role")
     vault := libConfig.NewStorageVault(auth, "vault address", "data")
     reader := libConfig.NewVaultReaderWithFormatter(vault, defaultPathFormatter)
-    if err := service.Start(&cfg, nil, &reader); err != nil {
+    if err := service.Start(&cfg, nil, reader); err != nil {
         // some error handler
     }
     defer service.Stop()
@@ -101,5 +102,6 @@ func main() {
     service := libConfig.NewConfigService(1 * time.Minute)
     // assign validator
     service.Validator = &Validator{validator: validator.New()}
+    // ....
 }
 ```
