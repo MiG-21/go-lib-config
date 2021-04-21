@@ -45,7 +45,7 @@ func main() {
 		File       string `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/file:name" validate:"required"`
 		Threshold  int    `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/common:threshold"`
 	}{}
-	service := libConfig.NewConfigService(1 * time.Minute)
+	service := libConfig.NewConfigService(15 * time.Second)
 	// assign validator
 	service.Validator = &Validator{validator: validator.New()}
 	defer func() {
@@ -55,8 +55,14 @@ func main() {
 	vault, _ := libConfig.NewStorageVault(auth, vaultAddress, "data")
 	vaultReader := libConfig.NewVaultReaderWithFormatter(vault, formatter(env, stack, serviceName))
 	vaultReader.Quiet = true
-	if err := service.Start(cfg, nil, vaultReader); err != nil {
-		log.Fatal(err)
+	if err := service.Start(cfg, func(err error) {
+		log.Println("Config has been refreshed")
+		if err != nil {
+			log.Println(err)
+		}
+	}, vaultReader); err != nil {
+		log.Println(err)
 	}
 	log.Println(cfg)
+	time.Sleep(2 * time.Minute)
 }
