@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 )
 
 var (
@@ -45,6 +46,7 @@ type (
 		vaultAddress      string
 		vaultAuthEndpoint string
 		tokenPath         string
+		tokenUpdatedAt    time.Time
 	}
 )
 
@@ -140,15 +142,28 @@ func (a *VaultK8sAuth) parseResponseToken(res *http.Response) (string, error) {
 		return "", errK8sAuthEmptyClientToken
 	}
 
+	a.tokenUpdatedAt = time.Now()
+
 	return a.Response.Auth.ClientToken, nil
 }
 
+// isExpired check is the token expired
+func (a *VaultK8sAuth) isExpired() bool {
+	if a.Response.Auth.LeaseDuration == 0 {
+		return true
+	}
+	delta := time.Since(a.tokenUpdatedAt)
+	return delta.Seconds() >= float64(a.Response.Auth.LeaseDuration)
+}
+
 func (a *VaultK8sAuth) GetToken() (string, error) {
-	// @TODO this part should be improved
-	res, err := a.sendAuthRequest()
-	if err != nil {
-		return "", err
+	if a.isExpired() {
+		res, err := a.sendAuthRequest()
+		if err != nil {
+			return "", err
+		}
+		return a.parseResponseToken(res)
 	}
 
-	return a.parseResponseToken(res)
+	return a.Response.Auth.ClientToken, nil
 }
