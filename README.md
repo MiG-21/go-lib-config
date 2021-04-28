@@ -9,8 +9,14 @@ if duration == 0 config refresh loop will not been started
 duration validation is not provided, so this is entirely your responsibility, keep in mind that too small an interval can lead to unforeseen consequences
 
 ```go
+// turn on logging, by default turned off
+libConfig.Verbose = true
+// refresh interval
 duration := 1 * time.Minute
+// get service instance
 service := libConfig.NewConfigService(duration)
+// start service
+valid, err := service.Start(&cfg, cb, reader)
 ```
 
 ### ENV reader
@@ -31,7 +37,7 @@ func main() {
     cb = func(err error) {
         // some error handler
     }
-    if err := service.Start(&cfg, cb, reader); err != nil {
+    if valid, err := service.Start(&cfg, cb, reader); err != nil {
         // some error handler
     }
     defer service.Stop()
@@ -59,7 +65,7 @@ func main() {
     auth := libConfig.NewVaultTokenAuth("token")
     vault := libConfig.NewStorageVault(auth, "vault address", "data")
     reader := libConfig.NewVaultReaderWithFormatter(vault, defaultPathFormatter)
-    if err := service.Start(&cfg, nil, reader); err != nil {
+    if valid, err := service.Start(&cfg, nil, reader); err != nil {
         // some error handler
     }
     defer service.Stop()
@@ -87,7 +93,7 @@ func main() {
     auth := libConfig.NewVaultK8sAuth("vault address", "auth endpoint", "token path", "role")
     vault := libConfig.NewStorageVault(auth, "vault address", "data")
     reader := libConfig.NewVaultReaderWithFormatter(vault, defaultPathFormatter)
-    if err := service.Start(&cfg, nil, reader); err != nil {
+    if valid, err := service.Start(&cfg, nil, reader); err != nil {
         // some error handler
     }
     defer service.Stop()
@@ -141,7 +147,7 @@ func main() {
     service := libConfig.NewConfigService(1 * time.Minute)
     reader1 := Reader1{}
     reader2 := Reader2{}
-    if err := service.Start(&cfg, nil, reader1, reader2); err != nil {
+    if valid, err := service.Start(&cfg, nil, reader1, reader2); err != nil {
         // some error handler
     }
 }
@@ -172,9 +178,17 @@ func main() {
     var cfg Config
     service := libConfig.NewConfigService(1 * time.Minute)
     reader := CustomReader{}
-    if err := service.Start(&cfg, nil, reader); err != nil {
+    if valid, err := service.Start(&cfg, nil, reader); err != nil {
         // some error handler
     }
     defer service.Stop()
+}
+```
+
+### Custom logger
+
+```go
+LibLogger = func(i ...interface{}) {
+	// custom implementation
 }
 ```

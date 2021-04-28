@@ -3,13 +3,14 @@ package config
 import (
 	"fmt"
 	"strings"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 type (
 	SecretPathFormatter func(secret string) string
 
 	VaultReader struct {
-		abstractReader
 		storage   *StorageVault
 		formatter SecretPathFormatter
 		tag       string
@@ -25,6 +26,7 @@ func (r VaultReader) Read(cfg interface{}) error {
 
 	keyMap := r.storage.InitMemorisedKvMap()
 
+	var result *multierror.Error
 	for _, meta := range metaInfo {
 		var val interface{}
 		tag, _ := meta.Tag.Lookup(r.tag)
@@ -33,23 +35,25 @@ func (r VaultReader) Read(cfg interface{}) error {
 		}
 		vaultTags := strings.Split(tag, ":")
 		if len(vaultTags) != 2 {
-			return fmt.Errorf("VAULT: %s Tag is invalid", tag)
+			result = multierror.Append(result, fmt.Errorf("%s vault secret is invalid", tag))
+			continue
 		}
 		key := vaultTags[0]
 		if r.formatter != nil {
 			key = r.formatter(key)
 		}
+
+		LibLogger(fmt.Sprintf("VAULT: reading %s:%s", key, vaultTags[1]))
+
 		if val, err = keyMap(key, vaultTags[1]); err != nil {
-			if r.Quiet {
-				continue
-			}
-			return err
+			result = multierror.Append(result, err)
+			continue
 		}
 
 		if err = parseValue(meta.FieldValue, val.(string), meta.Separator, meta.Layout); err != nil {
-			return err
+			result = multierror.Append(result, err)
 		}
 	}
 
-	return nil
+	return result
 }

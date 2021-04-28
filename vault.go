@@ -39,11 +39,11 @@ func (st *StorageVault) Request(vaultPath string) (map[string]interface{}, error
 	}
 
 	if vaultSecret == nil {
-		return nil, fmt.Errorf("VAULT: nil secret on %s", vaultPath)
+		return nil, fmt.Errorf("nil secret on %s", vaultPath)
 	}
 
 	if vaultSecret.Data == nil {
-		return nil, fmt.Errorf("VAULT: nil secret.Data on %s", vaultPath)
+		return nil, fmt.Errorf("nil secret.Data on %s", vaultPath)
 	}
 
 	return vaultSecret.Data, nil
@@ -61,12 +61,12 @@ func (st *StorageVault) InitMemorisedKvMap() func(path string, key string) (inte
 				// retrieve data
 				var secret interface{}
 				if secret, ok = data[st.vaultDataKey]; !ok {
-					return nil, fmt.Errorf("VAULT: failed to get data on %s for %s", path, st.vaultDataKey)
+					return nil, fmt.Errorf("failed to get data on %s for %s", path, st.vaultDataKey)
 				}
 				// cast data
 				var secretData map[string]interface{}
 				if secretData, ok = secret.(map[string]interface{}); !ok {
-					return nil, fmt.Errorf("VAULT: failed to cast to key-value pairs on %s", path)
+					return nil, fmt.Errorf("failed to cast to key-value pairs on %s", path)
 				}
 				// store data
 				m[path] = secretData
@@ -74,7 +74,7 @@ func (st *StorageVault) InitMemorisedKvMap() func(path string, key string) (inte
 		}
 		// search in memorized data
 		if k, ok := m[path][key]; !ok {
-			return nil, fmt.Errorf("VAULT: nil value on %s:%s", path, key)
+			return nil, fmt.Errorf("nil value on %s:%s", path, key)
 		} else {
 			return k, nil
 		}

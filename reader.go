@@ -25,11 +25,6 @@ type (
 		Read(cfg interface{}) error
 	}
 
-	abstractReader struct {
-		// do not break process after secret not found error
-		Quiet bool
-	}
-
 	// StructMeta is a structure metadata entity
 	StructMeta struct {
 		FieldName   string

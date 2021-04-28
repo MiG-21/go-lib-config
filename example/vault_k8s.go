@@ -21,6 +21,7 @@ func (cv *Validator) Validate(i interface{}) error {
 }
 
 func main() {
+	libConfig.Verbose = true
 	vaultAddress := os.Getenv("VAULT_URL")
 	authEndpoint := os.Getenv("VAULT_K8S_MOUNT")
 	authRole := os.Getenv("VAULT_K8S_ROLE")
@@ -54,15 +55,15 @@ func main() {
 	auth := libConfig.NewVaultK8sAuth(vaultAddress, authEndpoint, authTokenPath, authRole)
 	vault, _ := libConfig.NewStorageVault(auth, vaultAddress, "data")
 	vaultReader := libConfig.NewVaultReaderWithFormatter(vault, formatter(env, stack, serviceName))
-	vaultReader.Quiet = true
-	if err := service.Start(cfg, func(err error) {
+	// loop has been started only if config is valid
+	_, err := service.Start(cfg, func(valid bool, err error) {
 		log.Println("Config has been refreshed")
 		if err != nil {
 			log.Println(err)
 		}
-	}, vaultReader); err != nil {
+		log.Println(cfg)
+	}, vaultReader)
+	if err != nil {
 		log.Println(err)
 	}
-	log.Println(cfg)
-	time.Sleep(2 * time.Minute)
 }
