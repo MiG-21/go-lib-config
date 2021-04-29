@@ -32,7 +32,9 @@ func (r EnvReader) Read(cfg interface{}) error {
 		if value, ok := os.LookupEnv(tag); ok {
 			rawValue = &value
 		} else {
-			result = multierror.Append(result, fmt.Errorf("env var %s is not set", tag))
+			if !meta.DefValueProvided || Verbose {
+				result = multierror.Append(result, fmt.Errorf("env var %s is not set", tag))
+			}
 			continue
 		}
 

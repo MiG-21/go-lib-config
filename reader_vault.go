@@ -46,7 +46,9 @@ func (r VaultReader) Read(cfg interface{}) error {
 		LibLogger(fmt.Sprintf("VAULT: reading %s:%s", key, vaultTags[1]))
 
 		if val, err = keyMap(key, vaultTags[1]); err != nil {
-			result = multierror.Append(result, err)
+			if !meta.DefValueProvided || Verbose {
+				result = multierror.Append(result, err)
+			}
 			continue
 		}
 

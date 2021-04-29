@@ -27,13 +27,14 @@ type (
 
 	// StructMeta is a structure metadata entity
 	StructMeta struct {
-		FieldName   string
-		FieldValue  reflect.Value
-		Tag         *reflect.StructTag
-		Layout      string
-		Separator   string
-		DefValue    string
-		Description string
+		FieldName        string
+		FieldValue       reflect.Value
+		Tag              *reflect.StructTag
+		Layout           string
+		Separator        string
+		DefValue         string
+		DefValueProvided bool
+		Description      string
 	}
 )
 
@@ -88,7 +89,7 @@ func readStructMetadata(cfgRoot interface{}) ([]StructMeta, error) {
 				continue
 			}
 
-			defValue, _ := fType.Tag.Lookup(TagDataDefault)
+			defValue, defValueProvided := fType.Tag.Lookup(TagDataDefault)
 			dataDescription, _ := fType.Tag.Lookup(TagDataDescription)
 
 			if sep, ok := fType.Tag.Lookup(TagDataSeparator); ok {
@@ -98,13 +99,14 @@ func readStructMetadata(cfgRoot interface{}) ([]StructMeta, error) {
 			}
 
 			metas = append(metas, StructMeta{
-				FieldName:   s.Type().Field(idx).Name,
-				FieldValue:  s.Field(idx),
-				Tag:         &fType.Tag,
-				Layout:      layout,
-				Separator:   separator,
-				DefValue:    defValue,
-				Description: dataDescription,
+				FieldName:        s.Type().Field(idx).Name,
+				FieldValue:       s.Field(idx),
+				Tag:              &fType.Tag,
+				Layout:           layout,
+				Separator:        separator,
+				DefValue:         defValue,
+				DefValueProvided: defValueProvided,
+				Description:      dataDescription,
 			})
 		}
 
