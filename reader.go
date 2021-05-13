@@ -23,7 +23,7 @@ const (
 
 type (
 	Reader interface {
-		Read(cfg interface{}) error
+		Read(metas []*StructMeta) error
 	}
 
 	// StructMeta is a structure metadata entity
@@ -37,6 +37,7 @@ type (
 		DefValueProvided bool
 		Description      string
 		NotLogging       bool
+		Provider         string
 	}
 )
 
@@ -45,10 +46,10 @@ func (sm *StructMeta) isFieldValueZero() bool {
 	return sm.FieldValue.IsZero()
 }
 
-// readStructMetadata reads structure metadata (types, tags, etc.)
-func readStructMetadata(cfgRoot interface{}) ([]StructMeta, error) {
+// ReadStructMetadata reads structure metadata (types, tags, etc.)
+func ReadStructMetadata(cfgRoot interface{}) ([]*StructMeta, error) {
 	cfgStack := []interface{}{cfgRoot}
-	metas := make([]StructMeta, 0)
+	metas := make([]*StructMeta, 0)
 
 	for i := 0; i < len(cfgStack); i++ {
 		s := reflect.ValueOf(cfgStack[i])
@@ -101,7 +102,7 @@ func readStructMetadata(cfgRoot interface{}) ([]StructMeta, error) {
 				separator = DefaultSeparator
 			}
 
-			metas = append(metas, StructMeta{
+			metas = append(metas, &StructMeta{
 				FieldName:        s.Type().Field(idx).Name,
 				FieldValue:       s.Field(idx),
 				Tag:              &fType.Tag,
@@ -111,6 +112,7 @@ func readStructMetadata(cfgRoot interface{}) ([]StructMeta, error) {
 				DefValueProvided: defValueProvided,
 				Description:      dataDescription,
 				NotLogging:       dataNotLogging,
+				Provider:         "-",
 			})
 		}
 	}
@@ -257,24 +259,26 @@ func parseMap(valueType reflect.Type, value, sep, layout string) (*reflect.Value
 }
 
 // setDefaults data after populating
-func setDefaults(cfg interface{}) error {
-	metaInfo, err := readStructMetadata(cfg)
-	if err != nil {
-		return err
-	}
+func setDefaults(metas []*StructMeta) error {
 	errCollector := errorCollector()
-	var cErr error
-	for _, meta := range metaInfo {
+	var cErr, err error
+	for _, meta := range metas {
 		if meta.isFieldValueZero() {
 			if meta.DefValue != "" {
 				if err = parseValue(meta.FieldValue, meta.DefValue, meta.Separator, meta.Layout); err != nil {
 					cErr = errCollector(err)
-				} else if !meta.NotLogging {
-					LibLogger(fmt.Sprintf("DEFAULT: %s = %v", meta.FieldName, meta.FieldValue))
+				} else {
+					meta.Provider = "default"
 				}
 			}
 		}
+		if meta.NotLogging {
+			LibLogger(fmt.Sprintf("%s = ********** [%s]", meta.FieldName, meta.Provider))
+		} else {
+			LibLogger(fmt.Sprintf("%s = %v [%s]", meta.FieldName, meta.FieldValue, meta.Provider))
+		}
 	}
+
 	return cErr
 }
 

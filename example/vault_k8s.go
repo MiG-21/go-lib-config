@@ -21,6 +21,8 @@ func (cv *Validator) Validate(i interface{}) error {
 }
 
 func main() {
+	defer os.Clearenv()
+	_ = os.Setenv("LOG_LEVEL", "INFO")
 	libConfig.Verbose = true
 	vaultAddress := os.Getenv("VAULT_URL")
 	authEndpoint := os.Getenv("VAULT_K8S_MOUNT")
@@ -41,7 +43,7 @@ func main() {
 		}
 	}
 	cfg := &struct {
-		LogLevel   string `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/common:level"`
+		LogLevel   string `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/common:level" env:"LOG_LEVEL"`
 		SampleRate int    `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/common:samplerate" data-default:"50"`
 		File       string `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/file:name" validate:"required"`
 		Threshold  int    `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/common:threshold"`
@@ -55,6 +57,7 @@ func main() {
 	auth := libConfig.NewVaultK8sAuth(vaultAddress, authEndpoint, authTokenPath, authRole)
 	vault, _ := libConfig.NewStorageVault(auth, vaultAddress, "data")
 	vaultReader := libConfig.NewVaultReaderWithFormatter(vault, formatter(env, stack, serviceName))
+	envReader := libConfig.NewEnvReader()
 	// loop has been started only if config is valid
 	_, err := service.Start(cfg, func(valid bool, err error) {
 		log.Println("Config has been refreshed")
@@ -62,8 +65,9 @@ func main() {
 			log.Println(err)
 		}
 		log.Println(cfg)
-	}, vaultReader)
+	}, vaultReader, envReader)
 	if err != nil {
 		log.Println(err)
 	}
+	log.Println(cfg)
 }

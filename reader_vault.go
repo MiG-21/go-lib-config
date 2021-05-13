@@ -18,16 +18,13 @@ type (
 )
 
 // reads vault variables to the provided configuration structure
-func (r VaultReader) Read(cfg interface{}) error {
-	metaInfo, err := readStructMetadata(cfg)
-	if err != nil {
-		return err
-	}
+func (r VaultReader) Read(metas []*StructMeta) error {
+	var err error
 
 	keyMap := r.storage.InitMemorisedKvMap()
 
 	var result *multierror.Error
-	for _, meta := range metaInfo {
+	for _, meta := range metas {
 		var val interface{}
 		tag, _ := meta.Tag.Lookup(r.tag)
 		if tag == "" {
@@ -35,7 +32,7 @@ func (r VaultReader) Read(cfg interface{}) error {
 		}
 		vaultTags := strings.Split(tag, ":")
 		if len(vaultTags) != 2 {
-			result = multierror.Append(result, fmt.Errorf("VAULT: %s secret is invalid", tag))
+			result = multierror.Append(result, fmt.Errorf("%s secret is invalid", tag))
 			continue
 		}
 		key := vaultTags[0]
@@ -43,7 +40,7 @@ func (r VaultReader) Read(cfg interface{}) error {
 			key = r.formatter(key)
 		}
 
-		LibLogger(fmt.Sprintf("VAULT: reading %s:%s", key, vaultTags[1]))
+		LibLogger(fmt.Sprintf("reading %s:%s", key, vaultTags[1]))
 
 		if val, err = keyMap(key, vaultTags[1]); err != nil {
 			if !meta.DefValueProvided || Verbose {
@@ -54,8 +51,8 @@ func (r VaultReader) Read(cfg interface{}) error {
 
 		if err = parseValue(meta.FieldValue, val.(string), meta.Separator, meta.Layout); err != nil {
 			result = multierror.Append(result, err)
-		} else if !meta.NotLogging {
-			LibLogger(fmt.Sprintf("VAULT: %s = %v", meta.FieldName, meta.FieldValue))
+		} else {
+			meta.Provider = r.tag
 		}
 	}
 

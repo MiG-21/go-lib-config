@@ -46,7 +46,9 @@ var _ = Describe("Config", func() {
 
 			var cfg TestAllTypesCfg
 			reader := libConfig.NewEnvReader()
-			err := reader.Read(&cfg)
+			metaInfo, err := libConfig.ReadStructMetadata(&cfg)
+			Expect(err).NotTo(HaveOccurred())
+			err = reader.Read(metaInfo)
 			Expect(err).NotTo(HaveOccurred())
 
 			expected := TestAllTypesCfg{
@@ -96,7 +98,9 @@ var _ = Describe("Config", func() {
 
 			var cfg TestTimeCfg
 			reader := libConfig.NewEnvReader()
-			err := reader.Read(&cfg)
+			metaInfo, err := libConfig.ReadStructMetadata(&cfg)
+			Expect(err).NotTo(HaveOccurred())
+			err = reader.Read(metaInfo)
 			Expect(err).NotTo(HaveOccurred())
 
 			expected := TestTimeCfg{
