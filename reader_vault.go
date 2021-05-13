@@ -35,7 +35,7 @@ func (r VaultReader) Read(cfg interface{}) error {
 		}
 		vaultTags := strings.Split(tag, ":")
 		if len(vaultTags) != 2 {
-			result = multierror.Append(result, fmt.Errorf("%s vault secret is invalid", tag))
+			result = multierror.Append(result, fmt.Errorf("VAULT: %s secret is invalid", tag))
 			continue
 		}
 		key := vaultTags[0]

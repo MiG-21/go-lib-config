@@ -266,6 +266,8 @@ func setDefaults(cfg interface{}) error {
 			if meta.DefValue != "" {
 				if err = parseValue(meta.FieldValue, meta.DefValue, meta.Separator, meta.Layout); err != nil {
 					cErr = errCollector(err)
+				} else {
+					LibLogger(fmt.Sprintf("DEFAULT: %s = %v", meta.FieldName, meta.FieldValue))
 				}
 			}
 		}

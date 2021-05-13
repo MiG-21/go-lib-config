@@ -25,7 +25,7 @@ func (r EnvReader) Read(cfg interface{}) error {
 			continue
 		}
 
-		LibLogger(fmt.Sprintf("reading %s", tag))
+		LibLogger(fmt.Sprintf("ENV: reading %s", tag))
 
 		var rawValue *string
 
@@ -33,7 +33,7 @@ func (r EnvReader) Read(cfg interface{}) error {
 			rawValue = &value
 		} else {
 			if !meta.DefValueProvided || Verbose {
-				result = multierror.Append(result, fmt.Errorf("env var %s is not set", tag))
+				result = multierror.Append(result, fmt.Errorf("ENV: %s is not set", tag))
 			}
 			continue
 		}
