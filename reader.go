@@ -15,6 +15,7 @@ const (
 	TagDataSeparator   = "data-separator"
 	TagDataDefault     = "data-default"
 	TagDataDescription = "data-description"
+	TagDataNotLogging  = "data-not-logging"
 
 	// DefaultSeparator is a default list and map Separator character
 	DefaultSeparator = ","
@@ -35,6 +36,7 @@ type (
 		DefValue         string
 		DefValueProvided bool
 		Description      string
+		NotLogging       bool
 	}
 )
 
@@ -91,6 +93,7 @@ func readStructMetadata(cfgRoot interface{}) ([]StructMeta, error) {
 
 			defValue, defValueProvided := fType.Tag.Lookup(TagDataDefault)
 			dataDescription, _ := fType.Tag.Lookup(TagDataDescription)
+			_, dataNotLogging := fType.Tag.Lookup(TagDataNotLogging)
 
 			if sep, ok := fType.Tag.Lookup(TagDataSeparator); ok {
 				separator = sep
@@ -107,9 +110,9 @@ func readStructMetadata(cfgRoot interface{}) ([]StructMeta, error) {
 				DefValue:         defValue,
 				DefValueProvided: defValueProvided,
 				Description:      dataDescription,
+				NotLogging:       dataNotLogging,
 			})
 		}
-
 	}
 
 	return metas, nil
@@ -266,7 +269,7 @@ func setDefaults(cfg interface{}) error {
 			if meta.DefValue != "" {
 				if err = parseValue(meta.FieldValue, meta.DefValue, meta.Separator, meta.Layout); err != nil {
 					cErr = errCollector(err)
-				} else {
+				} else if !meta.NotLogging {
 					LibLogger(fmt.Sprintf("DEFAULT: %s = %v", meta.FieldName, meta.FieldValue))
 				}
 			}

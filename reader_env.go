@@ -40,6 +40,8 @@ func (r EnvReader) Read(cfg interface{}) error {
 
 		if err = parseValue(meta.FieldValue, *rawValue, meta.Separator, meta.Layout); err != nil {
 			result = multierror.Append(result, err)
+		} else if !meta.NotLogging {
+			LibLogger(fmt.Sprintf("ENV: %s = %v", meta.FieldName, meta.FieldValue))
 		}
 	}
 

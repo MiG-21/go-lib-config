@@ -54,6 +54,8 @@ func (r VaultReader) Read(cfg interface{}) error {
 
 		if err = parseValue(meta.FieldValue, val.(string), meta.Separator, meta.Layout); err != nil {
 			result = multierror.Append(result, err)
+		} else if !meta.NotLogging {
+			LibLogger(fmt.Sprintf("VAULT: %s = %v", meta.FieldName, meta.FieldValue))
 		}
 	}
 
