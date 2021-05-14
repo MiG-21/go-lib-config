@@ -23,7 +23,7 @@ const (
 
 type (
 	Reader interface {
-		Read(metas []*StructMeta) error
+		Read(metas []StructMeta) error
 	}
 
 	// StructMeta is a structure metadata entity
@@ -47,9 +47,9 @@ func (sm *StructMeta) isFieldValueZero() bool {
 }
 
 // ReadStructMetadata reads structure metadata (types, tags, etc.)
-func ReadStructMetadata(cfgRoot interface{}) ([]*StructMeta, error) {
+func ReadStructMetadata(cfgRoot interface{}) ([]StructMeta, error) {
 	cfgStack := []interface{}{cfgRoot}
-	metas := make([]*StructMeta, 0)
+	metas := make([]StructMeta, 0)
 
 	for i := 0; i < len(cfgStack); i++ {
 		s := reflect.ValueOf(cfgStack[i])
@@ -102,7 +102,7 @@ func ReadStructMetadata(cfgRoot interface{}) ([]*StructMeta, error) {
 				separator = DefaultSeparator
 			}
 
-			metas = append(metas, &StructMeta{
+			metas = append(metas, StructMeta{
 				FieldName:        s.Type().Field(idx).Name,
 				FieldValue:       s.Field(idx),
 				Tag:              &fType.Tag,
@@ -259,27 +259,32 @@ func parseMap(valueType reflect.Type, value, sep, layout string) (*reflect.Value
 }
 
 // setDefaults data after populating
-func setDefaults(metas []*StructMeta) error {
+func setDefaults(metas []StructMeta) error {
 	errCollector := errorCollector()
 	var cErr, err error
-	for _, meta := range metas {
+	for k, meta := range metas {
 		if meta.isFieldValueZero() {
-			if meta.DefValue != "" {
+			if meta.DefValueProvided {
 				if err = parseValue(meta.FieldValue, meta.DefValue, meta.Separator, meta.Layout); err != nil {
 					cErr = errCollector(err)
 				} else {
-					meta.Provider = "default"
+					metas[k].Provider = "default"
 				}
 			}
 		}
+	}
+	return cErr
+}
+
+// dumpMetas by logger
+func dumpMetas(metas []StructMeta) {
+	for _, meta := range metas {
 		if meta.NotLogging {
 			LibLogger(fmt.Sprintf("%s = ********** [%s]", meta.FieldName, meta.Provider))
 		} else {
 			LibLogger(fmt.Sprintf("%s = %v [%s]", meta.FieldName, meta.FieldValue, meta.Provider))
 		}
 	}
-
-	return cErr
 }
 
 // errorCollector for populate errors without break read loop

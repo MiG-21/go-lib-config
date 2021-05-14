@@ -12,11 +12,11 @@ type EnvReader struct {
 }
 
 // reads environment variables to the provided configuration structure
-func (r EnvReader) Read(metas []*StructMeta) error {
+func (r EnvReader) Read(metas []StructMeta) error {
 	var err error
 
 	var result *multierror.Error
-	for _, meta := range metas {
+	for k, meta := range metas {
 		tag, _ := meta.Tag.Lookup(r.tag)
 		if tag == "" {
 			continue
@@ -38,7 +38,7 @@ func (r EnvReader) Read(metas []*StructMeta) error {
 		if err = parseValue(meta.FieldValue, *rawValue, meta.Separator, meta.Layout); err != nil {
 			result = multierror.Append(result, err)
 		} else {
-			meta.Provider = r.tag
+			metas[k].Provider = r.tag
 		}
 	}
 

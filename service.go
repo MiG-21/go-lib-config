@@ -50,7 +50,7 @@ func (s *Service) Start(cfg interface{}, cb LoadCallback, readers ...Reader) (bo
 func (s *Service) ReadAndValidate(cfg interface{}, readers ...Reader) (bool, error) {
 	var err error
 	var errors *multierror.Error
-	var metaInfo []*StructMeta
+	var metaInfo []StructMeta
 
 	if len(readers) == 0 {
 		return false, fmt.Errorf("no config readers found")
@@ -70,6 +70,8 @@ func (s *Service) ReadAndValidate(cfg interface{}, readers ...Reader) (bool, err
 	if err = setDefaults(metaInfo); err != nil {
 		errors = multierror.Append(errors, err)
 	}
+
+	dumpMetas(metaInfo)
 
 	valid := true
 	if s.Validator != nil {

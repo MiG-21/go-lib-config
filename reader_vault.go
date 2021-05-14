@@ -18,13 +18,13 @@ type (
 )
 
 // reads vault variables to the provided configuration structure
-func (r VaultReader) Read(metas []*StructMeta) error {
+func (r VaultReader) Read(metas []StructMeta) error {
 	var err error
 
 	keyMap := r.storage.InitMemorisedKvMap()
 
 	var result *multierror.Error
-	for _, meta := range metas {
+	for k, meta := range metas {
 		var val interface{}
 		tag, _ := meta.Tag.Lookup(r.tag)
 		if tag == "" {
@@ -52,7 +52,7 @@ func (r VaultReader) Read(metas []*StructMeta) error {
 		if err = parseValue(meta.FieldValue, val.(string), meta.Separator, meta.Layout); err != nil {
 			result = multierror.Append(result, err)
 		} else {
-			meta.Provider = r.tag
+			metas[k].Provider = r.tag
 		}
 	}
 

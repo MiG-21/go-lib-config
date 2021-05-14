@@ -159,7 +159,7 @@ Custom reader can be implemented in accordance with interface `Reader`
 
 ```go
 type Reader interface {
-    Read(metas []*StructMeta) error
+    Read(metas []StructMeta) error
 }
 ```
 
@@ -170,7 +170,7 @@ type CustomReader struct {
 
 }
 
-func (r *CustomReader) Read(metas []*StructMeta) error {
+func (r *CustomReader) Read(metas []StructMeta) error {
     // some implementation
 }
 

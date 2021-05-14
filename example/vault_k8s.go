@@ -45,8 +45,8 @@ func main() {
 	cfg := &struct {
 		LogLevel   string `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/common:level" env:"LOG_LEVEL"`
 		SampleRate int    `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/common:samplerate" data-default:"50"`
-		File       string `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/file:name" validate:"required"`
 		Threshold  int    `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/common:threshold"`
+		File       string `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/file:name" validate:"required"`
 	}{}
 	service := libConfig.NewConfigService(15 * time.Second)
 	// assign validator
