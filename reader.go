@@ -22,8 +22,19 @@ const (
 )
 
 type (
+	// Reader should be implemented by custom reader
 	Reader interface {
 		Read(metas []StructMeta) error
+	}
+
+	// Setter gives an ability to implement custom setter for a field or struct
+	Setter interface {
+		SetValue(string) error
+	}
+
+	// Updater gives an ability to implement custom update function for a config structure
+	Updater interface {
+		Update() error
 	}
 
 	// StructMeta is a structure metadata entity
@@ -123,6 +134,14 @@ func ReadStructMetadata(cfgRoot interface{}) ([]StructMeta, error) {
 // parseValue parses value into the corresponding field.
 // In case of maps and slices it uses provided Separator to split raw value string
 func parseValue(field reflect.Value, value, sep, layout string) error {
+	if field.CanInterface() {
+		if cs, ok := field.Interface().(Setter); ok {
+			return cs.SetValue(value)
+		} else if csp, ok := field.Addr().Interface().(Setter); ok {
+			return csp.SetValue(value)
+		}
+	}
+
 	valueType := field.Type()
 
 	switch valueType.Kind() {

@@ -55,6 +55,12 @@ func (s *Service) ReadAndValidate(cfg interface{}, readers ...Reader) (bool, err
 	if len(readers) == 0 {
 		return false, fmt.Errorf("no config readers found")
 	} else {
+		if updater, ok := cfg.(Updater); ok {
+			if err = updater.Update(); err != nil {
+				return false, err
+			}
+		}
+
 		metaInfo, err = ReadStructMetadata(cfg)
 		if err != nil {
 			return false, err

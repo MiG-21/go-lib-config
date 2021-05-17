@@ -192,3 +192,36 @@ LibLogger = func(i ...interface{}) {
 	// custom implementation
 }
 ```
+
+### Custom field setter
+
+To implement a custom value setter you need to add a SetValue function to your type that will receive a string raw value
+
+```go
+type Setter interface {
+    SetValue(string) error
+}
+```
+
+#### Example
+
+```go
+type (
+	Foo int
+)
+
+func (f *Foo) SetValue(value string) error {
+    v, err := strconv.ParseInt(value, 10, 32)
+    if err != nil {
+        return err
+    }
+    *f = Foo(v * 3)
+    return nil
+}
+
+func main() {
+    cfg := &struct {
+        F Foo `env:"SOME_VAR"`
+    }{}
+}
+```
