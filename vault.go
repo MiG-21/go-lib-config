@@ -25,7 +25,7 @@ type (
 	}
 )
 
-func (st *StorageVault) Request(vaultPath string) (map[string]interface{}, error) {
+func (st *StorageVault) Read(vaultPath string) (map[string]interface{}, error) {
 	clientToken, err := st.GetToken()
 	if err != nil {
 		return nil, err
@@ -49,13 +49,37 @@ func (st *StorageVault) Request(vaultPath string) (map[string]interface{}, error
 	return vaultSecret.Data, nil
 }
 
+func (st *StorageVault) Write(vaultPath string, data map[string]interface{}) (map[string]interface{}, error) {
+	clientToken, err := st.GetToken()
+	if err != nil {
+		return nil, err
+	}
+
+	st.vaultClient.SetToken(clientToken)
+
+	vaultSecret, err := st.vaultClient.Logical().Write(vaultPath, data)
+	if err != nil {
+		return nil, err
+	}
+
+	if vaultSecret == nil {
+		return nil, fmt.Errorf("nil secret on %s", vaultPath)
+	}
+
+	if vaultSecret.Data == nil {
+		return nil, fmt.Errorf("nil secret.Data on %s", vaultPath)
+	}
+
+	return vaultSecret.Data, nil
+}
+
 // InitMemorisedKvMap avoid too many allocations by memorizing the "path|key" pair for an event
 // @see https://gobyexample.com/closures
 func (st *StorageVault) InitMemorisedKvMap() func(path string, key string) (interface{}, error) {
 	m := make(map[string]map[string]interface{})
 	return func(path string, key string) (interface{}, error) {
 		if _, ok := m[path]; !ok {
-			if data, err := st.Request(path); err != nil {
+			if data, err := st.Read(path); err != nil {
 				return nil, err
 			} else {
 				// retrieve data
