@@ -131,7 +131,7 @@ var _ = Describe("Config", func() {
 			var cfg TestCfg
 			service := libConfig.NewConfigService(5 * time.Millisecond)
 			reader := libConfig.NewEnvReader()
-			_, err := service.Start(&cfg, nil, &reader)
+			_, err := service.Start(&cfg, nil, reader)
 			defer func() {
 				_ = service.Stop()
 			}()
@@ -155,7 +155,7 @@ var _ = Describe("Config", func() {
 			var cfg TestCfg
 			service := libConfig.NewConfigService(5 * time.Millisecond)
 			reader := libConfig.NewEnvReader()
-			_, err := service.Start(&cfg, nil, &reader)
+			_, err := service.Start(&cfg, nil, reader)
 			defer func() {
 				_ = service.Stop()
 			}()
