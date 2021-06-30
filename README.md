@@ -63,12 +63,7 @@ func main() {
     var cfg Config
     service := libConfig.NewConfigService(1 * time.Minute)
     auth := libConfig.NewVaultTokenAuth("token")
-    vaultConfig := &api.Config{
-        AgentAddress: vaultAddress,
-        HttpClient: &http.Client{
-            Timeout: time.Second * 10,
-        },
-    }
+    vaultConfig := libConfig.NewApiConfig(vaultAddress, false)
     vault := libConfig.NewStorageVault(auth, vaultConfig, "data")
     reader := libConfig.NewVaultReaderWithFormatter(vault, defaultPathFormatter)
     if valid, err := service.Start(&cfg, nil, reader); err != nil {
@@ -97,12 +92,7 @@ func main() {
     var cfg Config
     service := libConfig.NewConfigService(1 * time.Minute)
     auth := libConfig.NewVaultK8sAuth("vault address", "auth endpoint", "token path", "role")
-    vaultConfig := &api.Config{
-        AgentAddress: vaultAddress,
-        HttpClient: &http.Client{
-            Timeout: time.Second * 10,
-        },
-    }
+    vaultConfig := libConfig.NewApiConfig(vaultAddress, false)
     vault := libConfig.NewStorageVault(auth, vaultConfig, "data")
     reader := libConfig.NewVaultReaderWithFormatter(vault, defaultPathFormatter)
     if valid, err := service.Start(&cfg, nil, reader); err != nil {

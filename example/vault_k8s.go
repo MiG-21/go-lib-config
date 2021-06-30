@@ -2,15 +2,12 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/hashicorp/vault/api"
-
 	libConfig "github.com/MiG-21/go-lib-config"
+	"github.com/go-playground/validator/v10"
 )
 
 // Validator wrapper example
@@ -58,12 +55,7 @@ func main() {
 		_ = service.Stop()
 	}()
 	auth := libConfig.NewVaultK8sAuth(vaultAddress, authEndpoint, authTokenPath, authRole)
-	vaultConfig := &api.Config{
-		Address: vaultAddress,
-		HttpClient: &http.Client{
-			Timeout: time.Second * 10,
-		},
-	}
+	vaultConfig := libConfig.NewApiConfig(vaultAddress, false)
 	vault, _ := libConfig.NewStorageVault(auth, vaultConfig, "data")
 	vaultReader := libConfig.NewVaultReaderWithFormatter(vault, formatter(env, stack, serviceName))
 	envReader := libConfig.NewEnvReader()

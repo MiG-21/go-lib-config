@@ -2,12 +2,9 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"time"
-
-	"github.com/hashicorp/vault/api"
 
 	libConfig "github.com/MiG-21/go-lib-config"
 )
@@ -42,12 +39,7 @@ func main() {
 		_ = service.Stop()
 	}()
 	auth := libConfig.NewVaultK8sAuth(vaultAddress, authEndpoint, authTokenPath, authRole)
-	vaultConfig := &api.Config{
-		AgentAddress: vaultAddress,
-		HttpClient: &http.Client{
-			Timeout: time.Second * 10,
-		},
-	}
+	vaultConfig := libConfig.NewApiConfig(vaultAddress, true)
 	vault, _ := libConfig.NewStorageVault(auth, vaultConfig, "data")
 	vaultReader := libConfig.NewVaultReaderWithFormatter(vault, formatter(env, stack, serviceName))
 	envReader := libConfig.NewEnvReader()
