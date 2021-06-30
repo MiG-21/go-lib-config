@@ -23,14 +23,7 @@ func NewVaultK8sAuth(vaultAddress, vaultAuthEndpoint, tokenPath, role string) *V
 	}
 }
 
-func NewStorageVault(auth VaultAuthenticate, vaultAddress, vaultDataKey string) (*StorageVault, error) {
-	vaultConfig := &api.Config{
-		Address: vaultAddress,
-		HttpClient: &http.Client{
-			Timeout: time.Second * 10,
-		},
-	}
-
+func NewStorageVault(auth VaultAuthenticate, vaultConfig *api.Config, vaultDataKey string) (*StorageVault, error) {
 	vaultClient, err := api.NewClient(vaultConfig)
 	if err != nil {
 		return nil, err

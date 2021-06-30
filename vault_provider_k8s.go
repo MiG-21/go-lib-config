@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/vault/api"
 	"net/http"
 	"os"
 	"path"
@@ -21,20 +22,7 @@ var (
 
 type (
 	vaultK8sLoginResponse struct {
-		Auth struct {
-			ClientToken   string   `json:"client_token"`
-			Accessor      string   `json:"accessor"`
-			Policies      []string `json:"policies"`
-			LeaseDuration int      `json:"lease_duration"`
-			Renewable     bool     `json:"renewable"`
-			Metadata      struct {
-				Role                     string `json:"role"`
-				ServiceAccountName       string `json:"service_account_name"`
-				ServiceAccountNamespace  string `json:"service_account_namespace"`
-				ServiceAccountSecretName string `json:"service_account_secret_name"`
-				ServiceAccountUID        string `json:"service_account_uid"`
-			} `json:"metadata"`
-		} `json:"auth"`
+		Auth api.SecretAuth `json:"auth"`
 	}
 
 	VaultK8sAuth struct {

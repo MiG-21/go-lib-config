@@ -7,26 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/hashicorp/vault/api"
 
 	libConfig "github.com/MiG-21/go-lib-config"
 )
 
-// Validator wrapper example
-type Validator struct {
-	validator *validator.Validate
-}
-
-func (cv *Validator) Validate(i interface{}) error {
-	return cv.validator.Struct(i)
-}
-
 func main() {
 	defer os.Clearenv()
-	_ = os.Setenv("LOG_LEVEL", "INFO")
 	libConfig.Verbose = true
-	vaultAddress := os.Getenv("VAULT_URL")
+	vaultAddress := os.Getenv("VAULT_AGENT_URL")
 	authEndpoint := os.Getenv("VAULT_K8S_MOUNT")
 	authRole := os.Getenv("VAULT_K8S_ROLE")
 	authTokenPath := os.Getenv("VAULT_AUTH_K8S_TOKEN_PATH")
@@ -46,20 +35,15 @@ func main() {
 	}
 	cfg := &struct {
 		HeadersTimeout string `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/server/connection/headersTimeout:value"`
-		LogLevel       string `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/common:level" env:"LOG_LEVEL"`
 		SampleRate     int    `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/common:samplerate" data-default:"50"`
-		Threshold      int    `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/common:threshold"`
-		File           string `vault:"{{.Env}}/{{.Stack}}/{{.Service}}/logger/file:name" validate:"required"`
 	}{}
 	service := libConfig.NewConfigService(15 * time.Second)
-	// assign validator
-	service.Validator = &Validator{validator: validator.New()}
 	defer func() {
 		_ = service.Stop()
 	}()
 	auth := libConfig.NewVaultK8sAuth(vaultAddress, authEndpoint, authTokenPath, authRole)
 	vaultConfig := &api.Config{
-		Address: vaultAddress,
+		AgentAddress: vaultAddress,
 		HttpClient: &http.Client{
 			Timeout: time.Second * 10,
 		},
