@@ -55,7 +55,7 @@ func main() {
 		_ = service.Stop()
 	}()
 	auth := libConfig.NewVaultK8sAuth(vaultAddress, authEndpoint, authTokenPath, authRole)
-	vaultConfig := libConfig.NewApiConfig(vaultAddress, false)
+	vaultConfig := libConfig.NewVaultApiConfig(vaultAddress, false)
 	vault, _ := libConfig.NewStorageVault(auth, vaultConfig, "data")
 	vaultReader := libConfig.NewVaultReaderWithFormatter(vault, formatter(env, stack, serviceName))
 	envReader := libConfig.NewEnvReader()

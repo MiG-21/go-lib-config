@@ -23,7 +23,7 @@ func NewVaultK8sAuth(vaultAddress, vaultAuthEndpoint, tokenPath, role string) *V
 	}
 }
 
-func NewApiConfig(address string, agent bool) *api.Config {
+func NewVaultApiConfig(address string, agent bool) *api.Config {
 	config := &api.Config{
 		HttpClient: &http.Client{
 			Timeout: time.Second * 10,
