@@ -25,6 +25,7 @@ type (
 	// Reader should be implemented by custom reader
 	Reader interface {
 		Read(metas []StructMeta) error
+		Stop()
 	}
 
 	// Setter gives an ability to implement custom setter for a field or struct

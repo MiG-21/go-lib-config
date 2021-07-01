@@ -15,25 +15,23 @@ type (
 	VaultProviderType string
 
 	VaultAuthenticate interface {
-		GetToken() (string, error)
+		Authenticate() error
+		GetClient() *api.Client
+		Stop()
 	}
 
 	StorageVault struct {
 		VaultAuthenticate
-		vaultClient  *api.Client
 		vaultDataKey string
 	}
 )
 
 func (st *StorageVault) Read(vaultPath string) (map[string]interface{}, error) {
-	clientToken, err := st.GetToken()
-	if err != nil {
+	if err := st.Authenticate(); err != nil {
 		return nil, err
 	}
 
-	st.vaultClient.SetToken(clientToken)
-
-	vaultSecret, err := st.vaultClient.Logical().Read(vaultPath)
+	vaultSecret, err := st.GetClient().Logical().Read(vaultPath)
 	if err != nil {
 		return nil, err
 	}
@@ -50,14 +48,11 @@ func (st *StorageVault) Read(vaultPath string) (map[string]interface{}, error) {
 }
 
 func (st *StorageVault) Write(vaultPath string, data map[string]interface{}) (map[string]interface{}, error) {
-	clientToken, err := st.GetToken()
-	if err != nil {
+	if err := st.Authenticate(); err != nil {
 		return nil, err
 	}
 
-	st.vaultClient.SetToken(clientToken)
-
-	vaultSecret, err := st.vaultClient.Logical().Write(vaultPath, data)
+	vaultSecret, err := st.GetClient().Logical().Write(vaultPath, data)
 	if err != nil {
 		return nil, err
 	}

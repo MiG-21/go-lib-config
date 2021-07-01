@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/vault/api"
 	"net/http"
 	"os"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/vault/api"
 )
 
 var (
@@ -26,9 +27,10 @@ type (
 	}
 
 	VaultK8sAuth struct {
-		Role     string                `json:"role"`
-		JWT      string                `json:"jwt"`
-		Response vaultK8sLoginResponse `json:"-"`
+		VaultTokenAuth `json:"-"`
+
+		Role string `json:"role"`
+		JWT  string `json:"jwt"`
 
 		httpClient        *http.Client
 		vaultAddress      string
@@ -103,7 +105,7 @@ func (a *VaultK8sAuth) sendAuthRequest() (*http.Response, error) {
 
 }
 
-func (a *VaultK8sAuth) parseResponseToken(res *http.Response) (string, error) {
+func (a *VaultK8sAuth) parseResponseToken(res *http.Response) (*api.Secret, error) {
 	defer func() {
 		_ = res.Body.Close()
 	}()
@@ -111,47 +113,45 @@ func (a *VaultK8sAuth) parseResponseToken(res *http.Response) (string, error) {
 	buff := bytes.NewBuffer([]byte{})
 
 	if _, err := buff.ReadFrom(res.Body); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("%w; statusCode %d for k8s a requestToken", errK8sAuthBadResponseStatusCode, res.StatusCode)
+		return nil, fmt.Errorf("%w; statusCode %d for k8s a requestToken", errK8sAuthBadResponseStatusCode, res.StatusCode)
 	}
 
 	result := vaultK8sLoginResponse{}
 
 	if err := json.Unmarshal(buff.Bytes(), &result); err != nil {
-		return "", fmt.Errorf("%w: %s", errK8sAuthBadResponseBody, err)
+		return nil, fmt.Errorf("%w: %s", errK8sAuthBadResponseBody, err)
+	}
+
+	if result.Auth.ClientToken == "" {
+		return nil, errK8sAuthEmptyClientToken
 	} else {
-		a.Response = result
+		a.token = result.Auth.ClientToken
 	}
 
-	if a.Response.Auth.ClientToken == "" {
-		return "", errK8sAuthEmptyClientToken
-	}
-
-	a.tokenUpdatedAt = time.Now()
-
-	return a.Response.Auth.ClientToken, nil
+	return a.getTokenEntity()
 }
 
-// isExpired check is the token expired
-func (a *VaultK8sAuth) isExpired() bool {
-	if a.Response.Auth.LeaseDuration == 0 {
-		return true
-	}
-	delta := time.Since(a.tokenUpdatedAt)
-	return delta.Seconds() >= float64(a.Response.Auth.LeaseDuration)
-}
-
-func (a *VaultK8sAuth) GetToken() (string, error) {
-	if a.isExpired() {
+func (a *VaultK8sAuth) Authenticate() error {
+	if a.Secret == nil && !a.isExpired() {
 		res, err := a.sendAuthRequest()
 		if err != nil {
-			return "", err
+			return err
 		}
-		return a.parseResponseToken(res)
+		if auth, err := a.parseResponseToken(res); err != nil {
+			return err
+		} else {
+			a.Secret = auth
+			if token, err := a.Secret.TokenID(); err != nil {
+				return err
+			} else {
+				a.Client.SetToken(token)
+				return a.renewToken()
+			}
+		}
 	}
-
-	return a.Response.Auth.ClientToken, nil
+	return nil
 }

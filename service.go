@@ -105,6 +105,9 @@ func (s *Service) loop(cfg interface{}, cb LoadCallback, readers ...Reader) {
 				select {
 				case <-s.quit:
 					s.started = false
+					for _, r := range readers {
+						r.Stop()
+					}
 					return
 				case <-nextRead:
 					valid, err := s.ReadAndValidate(cfg, readers...)

@@ -44,3 +44,7 @@ func (r EnvReader) Read(metas []StructMeta) error {
 
 	return result
 }
+
+func (r EnvReader) Stop() {
+	// do nothing
+}

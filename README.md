@@ -62,9 +62,9 @@ func defaultPathFormatter(secret string) string {
 func main() {
     var cfg Config
     service := libConfig.NewConfigService(1 * time.Minute)
-    auth := libConfig.NewVaultTokenAuth("token")
     vaultConfig := libConfig.NewVaultApiConfig(vaultAddress, false)
-    vault := libConfig.NewStorageVault(auth, vaultConfig, "data")
+    auth := libConfig.NewVaultTokenAuth("token", vaultConfig)
+    vault := libConfig.NewStorageVault(auth, "data")
     reader := libConfig.NewVaultReaderWithFormatter(vault, defaultPathFormatter)
     if valid, err := service.Start(&cfg, nil, reader); err != nil {
         // some error handler
@@ -91,9 +91,9 @@ func defaultPathFormatter(secret string) string {
 func main() {
     var cfg Config
     service := libConfig.NewConfigService(1 * time.Minute)
-    auth := libConfig.NewVaultK8sAuth("vault address", "auth endpoint", "token path", "role")
     vaultConfig := libConfig.NewVaultApiConfig(vaultAddress, false)
-    vault := libConfig.NewStorageVault(auth, vaultConfig, "data")
+    auth := libConfig.NewVaultK8sAuth("vault address", "auth endpoint", "token path", "role", vaultConfig)
+    vault := libConfig.NewStorageVault(auth, "data")
     reader := libConfig.NewVaultReaderWithFormatter(vault, defaultPathFormatter)
     if valid, err := service.Start(&cfg, nil, reader); err != nil {
         // some error handler
@@ -162,6 +162,7 @@ Custom reader can be implemented in accordance with interface `Reader`
 ```go
 type Reader interface {
     Read(metas []StructMeta) error
+    Stop()
 }
 ```
 
@@ -173,6 +174,10 @@ type CustomReader struct {
 }
 
 func (r *CustomReader) Read(metas []StructMeta) error {
+    // some implementation
+}
+
+func (r *CustomReader) Stop() {
     // some implementation
 }
 

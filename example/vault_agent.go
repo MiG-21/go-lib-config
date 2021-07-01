@@ -38,9 +38,9 @@ func main() {
 	defer func() {
 		_ = service.Stop()
 	}()
-	auth := libConfig.NewVaultK8sAuth(vaultAddress, authEndpoint, authTokenPath, authRole)
 	vaultConfig := libConfig.NewVaultApiConfig(vaultAddress, true)
-	vault, _ := libConfig.NewStorageVault(auth, vaultConfig, "data")
+	auth, _ := libConfig.NewVaultK8sAuth(vaultAddress, authEndpoint, authTokenPath, authRole, vaultConfig)
+	vault, _ := libConfig.NewStorageVault(auth, "data")
 	vaultReader := libConfig.NewVaultReaderWithFormatter(vault, formatter(env, stack, serviceName))
 	envReader := libConfig.NewEnvReader()
 	// loop has been started only if config is valid

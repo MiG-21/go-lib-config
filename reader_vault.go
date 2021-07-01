@@ -58,3 +58,7 @@ func (r VaultReader) Read(metas []StructMeta) error {
 
 	return result
 }
+
+func (r VaultReader) Stop() {
+	r.storage.Stop()
+}

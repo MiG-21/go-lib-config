@@ -7,11 +7,24 @@ import (
 	"github.com/hashicorp/vault/api"
 )
 
-func NewVaultTokenAuth(token string) *VaultTokenAuth {
-	return &VaultTokenAuth{token: token}
+func NewVaultTokenAuth(token string, vaultConfig *api.Config) (*VaultTokenAuth, error) {
+	vaultClient, err := api.NewClient(vaultConfig)
+	if err != nil {
+		return nil, err
+	}
+	return &VaultTokenAuth{
+		token:     token,
+		Client:    vaultClient,
+		quit:      make(chan bool),
+		increment: 1,
+	}, nil
 }
 
-func NewVaultK8sAuth(vaultAddress, vaultAuthEndpoint, tokenPath, role string) *VaultK8sAuth {
+func NewVaultK8sAuth(vaultAddress, vaultAuthEndpoint, tokenPath, role string, vaultConfig *api.Config) (*VaultK8sAuth, error) {
+	vaultTokenAuth, err := NewVaultTokenAuth("", vaultConfig)
+	if err != nil {
+		return nil, err
+	}
 	return &VaultK8sAuth{
 		Role:              role,
 		vaultAddress:      vaultAddress,
@@ -20,7 +33,8 @@ func NewVaultK8sAuth(vaultAddress, vaultAuthEndpoint, tokenPath, role string) *V
 		httpClient: &http.Client{
 			Timeout: time.Second * 10,
 		},
-	}
+		VaultTokenAuth: *vaultTokenAuth,
+	}, nil
 }
 
 func NewVaultApiConfig(address string, agent bool) *api.Config {
@@ -38,15 +52,9 @@ func NewVaultApiConfig(address string, agent bool) *api.Config {
 	return config
 }
 
-func NewStorageVault(auth VaultAuthenticate, vaultConfig *api.Config, vaultDataKey string) (*StorageVault, error) {
-	vaultClient, err := api.NewClient(vaultConfig)
-	if err != nil {
-		return nil, err
-	}
-
+func NewStorageVault(auth VaultAuthenticate, vaultDataKey string) (*StorageVault, error) {
 	return &StorageVault{
 		VaultAuthenticate: auth,
-		vaultClient:       vaultClient,
 		vaultDataKey:      vaultDataKey,
 	}, nil
 }
