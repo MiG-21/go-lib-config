@@ -13,10 +13,9 @@ func NewVaultTokenAuth(token string, vaultConfig *api.Config) (*VaultTokenAuth, 
 		return nil, err
 	}
 	return &VaultTokenAuth{
-		token:     token,
-		Client:    vaultClient,
-		quit:      make(chan bool),
-		increment: 1,
+		token:  token,
+		Client: vaultClient,
+		quit:   make(chan bool),
 	}, nil
 }
 

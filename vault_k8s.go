@@ -136,7 +136,7 @@ func (a *VaultK8sAuth) parseResponseToken(res *http.Response) (*api.Secret, erro
 }
 
 func (a *VaultK8sAuth) Authenticate() error {
-	if a.Secret == nil && !a.isExpired() {
+	if a.Secret == nil || a.isExpired() {
 		res, err := a.sendAuthRequest()
 		if err != nil {
 			return err

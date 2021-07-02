@@ -10,18 +10,17 @@ import (
 type VaultTokenAuth struct {
 	token      string
 	quit       chan bool
-	increment  int
 	refreshing bool
 	Client     *api.Client
 	Secret     *api.Secret
 }
 
 func (a *VaultTokenAuth) Authenticate() error {
-	if a.Secret == nil && !a.isExpired() {
-		if s, err := a.getTokenEntity(); err != nil {
+	if a.Secret == nil || a.isExpired() {
+		if entity, err := a.getTokenEntity(); err != nil {
 			return err
 		} else {
-			a.Secret = s
+			a.Secret = entity
 			if token, err := a.Secret.TokenID(); err != nil {
 				return err
 			} else {
@@ -81,13 +80,17 @@ func (a *VaultTokenAuth) renewToken() error {
 					a.refreshing = false
 					return
 				case <-nextRead:
-					self, err := a.Client.Auth().Token().RenewSelf(a.increment)
+					_, err := a.Client.Auth().Token().RenewSelf(int(ttl.Seconds()))
 					if err != nil {
 						a.onError(err)
 						return
 					}
-					a.Secret = self
-					a.increment++
+					entity, err := a.getTokenEntity()
+					if err != nil {
+						a.onError(err)
+						return
+					}
+					a.Secret = entity
 					ttl, err := a.Secret.TokenTTL()
 					if err != nil {
 						a.onError(err)
