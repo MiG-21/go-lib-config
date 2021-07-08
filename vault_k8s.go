@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/vault/api"
 	"net/http"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/hashicorp/vault/api"
 )
 
 var (
@@ -29,10 +30,10 @@ type (
 		Role string `json:"role"`
 		JWT  string `json:"jwt"`
 
-		httpClient        *http.Client
-		vaultAddress      string
-		vaultAuthEndpoint string
-		tokenPath         string
+		httpClient     *http.Client
+		vaultAddress   string
+		vaultAuthMount string
+		tokenPath      string
 	}
 )
 
@@ -67,12 +68,12 @@ func (a *VaultK8sAuth) getAuthUrl() (string, error) {
 		return "", errEnvVaultEmptyAddress
 	}
 
-	if a.vaultAuthEndpoint == "" {
-		return "", errAuthEndpoint
+	if a.vaultAuthMount == "" {
+		return "", errAuthMount
 	}
 
 	return strings.TrimRight(a.vaultAddress, "/") +
-		path.Join("/v1/auth", strings.Trim(a.vaultAuthEndpoint, "/"), "login"), nil
+		path.Join("/v1/auth", strings.Trim(a.vaultAuthMount, "/"), "login"), nil
 }
 
 func (a *VaultK8sAuth) sendAuthRequest() (*http.Response, error) {
@@ -125,7 +126,7 @@ func (a *VaultK8sAuth) parseResponseToken(res *http.Response) (*api.Secret, erro
 	if result.Auth.ClientToken == "" {
 		return nil, errK8sAuthEmptyClientToken
 	} else {
-		a.token = result.Auth.ClientToken
+		a.GetClient().SetToken(result.Auth.ClientToken)
 	}
 
 	return a.getTokenEntity()

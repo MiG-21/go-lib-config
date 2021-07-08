@@ -8,7 +8,6 @@ import (
 )
 
 type VaultTokenAuth struct {
-	token      string
 	quit       chan bool
 	refreshing bool
 	Client     *api.Client
@@ -37,7 +36,6 @@ func (a *VaultTokenAuth) GetClient() *api.Client {
 }
 
 func (a *VaultTokenAuth) getTokenEntity() (*api.Secret, error) {
-	a.Client.SetToken(a.token)
 	return a.Client.Auth().Token().LookupSelf()
 }
 

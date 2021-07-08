@@ -18,31 +18,31 @@ const (
 )
 
 type (
-	VaultIAM struct {
+	VaultIAMAuth struct {
 		VaultTokenAuth `json:"-"`
 
-		httpClient        *http.Client
-		vaultAddress      string
-		vaultAuthEndpoint string
-		vaultAuthRole     string
-		vaultAuthHeader   string
+		httpClient      *http.Client
+		vaultAddress    string
+		vaultAuthMount  string
+		vaultAuthRole   string
+		vaultAuthHeader string
 	}
 )
 
-func (a *VaultIAM) getAuthUrl() (string, error) {
+func (a *VaultIAMAuth) getAuthUrl() (string, error) {
 	if a.vaultAddress == "" {
 		return "", errEnvVaultEmptyAddress
 	}
 
-	if a.vaultAuthEndpoint == "" {
-		return "", errAuthEndpoint
+	if a.vaultAuthMount == "" {
+		return "", errAuthMount
 	}
 
 	return strings.TrimRight(a.vaultAddress, "/") +
-		path.Join("/v1/auth", strings.Trim(a.vaultAuthEndpoint, "/"), "login"), nil
+		path.Join("/v1/auth", strings.Trim(a.vaultAuthMount, "/"), "login"), nil
 }
 
-func (a *VaultIAM) sendAuthRequest() (*api.Secret, error) {
+func (a *VaultIAMAuth) sendAuthRequest() (*api.Secret, error) {
 	URL, err := a.getAuthUrl()
 	if err != nil {
 		return nil, err
@@ -85,14 +85,16 @@ func (a *VaultIAM) sendAuthRequest() (*api.Secret, error) {
 		return nil, err
 	}
 
-	if a.token, err = resp.TokenID(); err != nil {
+	if token, err := resp.TokenID(); err != nil {
 		return nil, err
+	} else {
+		a.GetClient().SetToken(token)
 	}
 
 	return a.getTokenEntity()
 }
 
-func (a *VaultIAM) Authenticate() error {
+func (a *VaultIAMAuth) Authenticate() error {
 	if a.Secret == nil || a.isExpired() {
 		auth, err := a.sendAuthRequest()
 		if err != nil {
