@@ -5,20 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/vault/api"
 	"net/http"
 	"os"
 	"path"
 	"strings"
-	"time"
-
-	"github.com/hashicorp/vault/api"
 )
 
 var (
 	errK8sAuthBadResponseStatusCode = errors.New("bad response status code")
 	errK8sAuthBadResponseBody       = errors.New("bad response body")
 	errK8sAuthEmptyClientToken      = errors.New("empty auth.client_token property in response body")
-	errK8sAuthEndpoint              = errors.New("empty auth endpoint")
 )
 
 type (
@@ -36,7 +33,6 @@ type (
 		vaultAddress      string
 		vaultAuthEndpoint string
 		tokenPath         string
-		tokenUpdatedAt    time.Time
 	}
 )
 
@@ -72,7 +68,7 @@ func (a *VaultK8sAuth) getAuthUrl() (string, error) {
 	}
 
 	if a.vaultAuthEndpoint == "" {
-		return "", errK8sAuthEndpoint
+		return "", errAuthEndpoint
 	}
 
 	return strings.TrimRight(a.vaultAddress, "/") +
