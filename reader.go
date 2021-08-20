@@ -53,11 +53,6 @@ type (
 	}
 )
 
-// isFieldValueZero determines if FieldValue empty or not
-func (sm *StructMeta) isFieldValueZero() bool {
-	return sm.FieldValue.IsZero()
-}
-
 // ReadStructMetadata reads structure metadata (types, tags, etc.)
 func ReadStructMetadata(cfgRoot interface{}) ([]StructMeta, error) {
 	cfgStack := []interface{}{cfgRoot}
@@ -227,6 +222,17 @@ func parseValue(field reflect.Value, value, sep, layout string) error {
 			field.Set(reflect.ValueOf(val))
 		}
 
+	// Experimental
+	case reflect.Ptr:
+		field = indirect(field)
+		// ... not sure that this case is possible,
+		// but we should prevent infinite recursion
+		valueType = field.Type()
+		if valueType.Kind() == reflect.Ptr {
+			return fmt.Errorf("unsupported type %s.%s", valueType.PkgPath(), valueType.Name())
+		}
+		return parseValue(field, value, sep, layout)
+
 	default:
 		return fmt.Errorf("unsupported type %s.%s", valueType.PkgPath(), valueType.Name())
 	}
@@ -283,13 +289,11 @@ func setDefaults(metas []StructMeta) error {
 	errCollector := errorCollector()
 	var cErr, err error
 	for k, meta := range metas {
-		if meta.isFieldValueZero() {
-			if meta.DefValueProvided {
-				if err = parseValue(meta.FieldValue, meta.DefValue, meta.Separator, meta.Layout); err != nil {
-					cErr = errCollector(err)
-				} else {
-					metas[k].Provider = "default"
-				}
+		if meta.DefValueProvided {
+			if err = parseValue(meta.FieldValue, meta.DefValue, meta.Separator, meta.Layout); err != nil {
+				cErr = errCollector(err)
+			} else {
+				metas[k].Provider = "default"
 			}
 		}
 	}
@@ -318,4 +322,64 @@ func errorCollector() func(err error) error {
 		}
 		return collectedErr
 	}
+}
+
+// indirect walks down v allocating pointers as needed,
+// until it gets to a non-pointer.
+func indirect(v reflect.Value) reflect.Value {
+	// The logic below effectively does this when it first addresses the value
+	// (to satisfy possible pointer methods) and continues to dereference
+	// subsequent pointers as necessary.
+	//
+	// After the first round-trip, we set v back to the original value to
+	// preserve the original RW flags contained in reflect.Value.
+	v0 := v
+	haveAddr := false
+
+	// If v is a named type and is addressable,
+	// start with its address, so that if the type has pointer methods,
+	// we find them.
+	if v.Kind() != reflect.Ptr && v.Type().Name() != "" && v.CanAddr() {
+		haveAddr = true
+		v = v.Addr()
+	}
+	for {
+		// Load value from interface, but only if the result will be
+		// usefully addressable.
+		if v.Kind() == reflect.Interface && !v.IsNil() {
+			e := v.Elem()
+			if e.Kind() == reflect.Ptr && !e.IsNil() && e.Elem().Kind() == reflect.Ptr {
+				haveAddr = false
+				v = e
+				continue
+			}
+		}
+
+		if v.Kind() != reflect.Ptr {
+			break
+		}
+
+		// Prevent infinite loop if v is an interface pointing to its own address:
+		//     var v interface{}
+		//     v = &v
+		if v.Elem().Kind() == reflect.Interface && v.Elem().Elem() == v {
+			v = v.Elem()
+			break
+		}
+		if v.IsNil() {
+			v.Set(reflect.New(v.Type().Elem()))
+		}
+		if v.Type().NumMethod() > 0 && v.CanInterface() {
+			return reflect.Value{}
+		}
+
+		if haveAddr {
+			v = v0 // restore original value after round-trip Value.Addr().Elem()
+			haveAddr = false
+		} else {
+			v = v.Elem()
+		}
+	}
+
+	return v
 }

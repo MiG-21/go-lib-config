@@ -119,6 +119,43 @@ var _ = Describe("Config", func() {
 
 			Expect(cfg).To(Equal(expected))
 		})
+
+		It("Ptr Types test should be Ok", func() {
+			defer os.Clearenv()
+
+			vars := map[string]string{
+				"TEST_INTEGER":    "-5",
+				"TEST_UNSINTEGER": "5",
+				"TEST_FLOAT":      "5.5",
+				"TEST_BOOLEAN":    "true",
+				"TEST_STRING":     "test",
+			}
+
+			for k, v := range vars {
+				_ = os.Setenv(k, v)
+			}
+
+			type TestPtrTypesCfg struct {
+				Integer    *int64   `env:"TEST_INTEGER"`
+				UnsInteger *uint64  `env:"TEST_UNSINTEGER"`
+				Float      *float64 `env:"TEST_FLOAT"`
+				Boolean    *bool    `env:"TEST_BOOLEAN"`
+				String     *string  `env:"TEST_STRING"`
+			}
+
+			var cfg TestPtrTypesCfg
+			reader := libConfig.NewEnvReader()
+			metaInfo, err := libConfig.ReadStructMetadata(&cfg)
+			Expect(err).NotTo(HaveOccurred())
+			err = reader.Read(metaInfo)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(*(cfg).Integer).To(Equal(int64(-5)))
+			Expect(*(cfg).UnsInteger).To(Equal(uint64(5)))
+			Expect(*(cfg).Float).To(Equal(5.5))
+			Expect(*(cfg).Boolean).To(Equal(true))
+			Expect(*(cfg).String).To(Equal("test"))
+		})
 	})
 
 	Context("NewConfigService", func() {

@@ -66,15 +66,15 @@ func (s *Service) ReadAndValidate(cfg interface{}, readers ...Reader) (bool, err
 			return false, err
 		}
 
+		if err = setDefaults(metaInfo); err != nil {
+			errors = multierror.Append(errors, err)
+		}
+
 		for _, reader := range readers {
 			if err = reader.Read(metaInfo); err != nil {
 				errors = multierror.Append(errors, err)
 			}
 		}
-	}
-
-	if err = setDefaults(metaInfo); err != nil {
-		errors = multierror.Append(errors, err)
 	}
 
 	dumpMetas(metaInfo)

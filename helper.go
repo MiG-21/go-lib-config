@@ -12,23 +12,37 @@ func NewVaultTokenAuth(token string, vaultConfig *api.Config) (*VaultTokenAuth, 
 	if err != nil {
 		return nil, err
 	}
+	vaultClient.SetToken(token)
 	return &VaultTokenAuth{
-		token:  token,
 		Client: vaultClient,
 		quit:   make(chan bool),
 	}, nil
 }
 
-func NewVaultK8sAuth(vaultAddress, vaultAuthEndpoint, tokenPath, role string, vaultConfig *api.Config) (*VaultK8sAuth, error) {
+func NewVaultIAMAuth(vaultAddress, vaultAuthMount, vaultAuthHeader, role string, vaultConfig *api.Config) (*VaultIAMAuth, error) {
+	vaultTokenAuth, err := NewVaultTokenAuth("", vaultConfig)
+	if err != nil {
+		return nil, err
+	}
+	return &VaultIAMAuth{
+		vaultAddress:    vaultAddress,
+		vaultAuthMount:  vaultAuthMount,
+		vaultAuthRole:   role,
+		vaultAuthHeader: vaultAuthHeader,
+		VaultTokenAuth:  *vaultTokenAuth,
+	}, nil
+}
+
+func NewVaultK8sAuth(vaultAddress, vaultAuthMount, tokenPath, role string, vaultConfig *api.Config) (*VaultK8sAuth, error) {
 	vaultTokenAuth, err := NewVaultTokenAuth("", vaultConfig)
 	if err != nil {
 		return nil, err
 	}
 	return &VaultK8sAuth{
-		Role:              role,
-		vaultAddress:      vaultAddress,
-		vaultAuthEndpoint: vaultAuthEndpoint,
-		tokenPath:         tokenPath,
+		Role:           role,
+		vaultAddress:   vaultAddress,
+		vaultAuthMount: vaultAuthMount,
+		tokenPath:      tokenPath,
 		httpClient: &http.Client{
 			Timeout: time.Second * 10,
 		},

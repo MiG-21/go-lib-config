@@ -9,6 +9,7 @@ import (
 
 var (
 	errEnvVaultEmptyAddress = errors.New("empty address for vault api")
+	errAuthMount            = errors.New("empty auth mount")
 )
 
 type (
